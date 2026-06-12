@@ -29,18 +29,20 @@ class Platformer2 extends Phaser.Scene {
 
             this.background = this.map.createLayer("Background", this.tileset2, 0, 0);
             this.groundLayer = this.map.createLayer("Ground-n-Platforms", this.tileset, 0, 0);
-            this.waterLayer = this.map.createLayer("Water", this.tileset2, 0, 0);
+            //this.waterLayer = this.map.createLayer("Water", this.tileset2, 0, 0);
+            this.spikesLayer = this.map.createLayer("Spikes", this.tileset2, 0, 0);
             this.platformLayer = this.map.createLayer("Platforms", this.tileset, 0, 0);
 
             this.jumpSound = this.sound.add('sfx_jump', { loop: false, volume: 0.9 });
             this.coinSound = this.sound.add('coin_collect', { loop: false, volume: 0.7 });
             this.donutSound = this.sound.add('donut_collect', { loop: false, volume: 0.7});
+            this.headhitSound = this.sound.add('head_hit', { loop: false, volume: 0.7});
             
 
             this.groundLayer.setCollisionByProperty({
                 collides: true
             });
-            this.waterLayer.setCollisionByProperty({
+            this.spikesLayer.setCollisionByProperty({
                 collides: true
             });
             this.platformLayer.setCollisionByProperty({
@@ -110,7 +112,8 @@ class Platformer2 extends Phaser.Scene {
             this.physics.add.collider(my.sprite.player, this.groundLayer);
             this.physics.add.collider(my.sprite.player, this.platformLayer);
 
-            this.physics.add.collider(my.sprite.player, this.waterLayer, () => {
+            this.physics.add.collider(my.sprite.player, this.spikesLayer, () => {
+                this.headhitSound.play();
                 this.handlePlayerDeath();
             }, null, this);
             
@@ -175,6 +178,11 @@ class Platformer2 extends Phaser.Scene {
             this.healthText.setDepth(1000);
             this.healthText.setOrigin(0.5);
             this.levelText = this.add.text(5, 17, "Level 2", {
+                fontSize: '12px',
+                fontFamily: 'Arial',
+                fill: '#000000',
+            });
+            this.jumpText = this.add.text(5, 32, "Press Up Arrow 2x to Double Jump!",{
                 fontSize: '12px',
                 fontFamily: 'Arial',
                 fill: '#000000',
