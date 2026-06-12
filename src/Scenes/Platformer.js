@@ -16,6 +16,9 @@
             this.MAX_HEALTH = 3;
             this.CUR_HEALTH = this.MAX_HEALTH;
             this.GAME_OVER = false;
+            this.score = 0;
+            this.coinScore = 100;
+            this.donutScore = 250;
             
         }
         preload() {
@@ -139,13 +142,17 @@
             // Handle collision detection with coins
             // 3rd parameter to overlap is a function
             this.physics.add.overlap(my.sprite.player, this.coinGroup, (obj1, obj2) => {
+                this.score += this.coinScore;
+                this.scoreText.setText(`Score: ${this.score}`);
                 obj2.destroy(); // remove coin on overlap
                 this.coinSound.play();
             });
             this.physics.add.overlap(my.sprite.player, this.donutGroup, (obj1, obj2) => {
+                this.score += this.donutScore;
                 obj2.destroy(); // remove donut on overlap
                 this.donutSound.play();
                 this.CUR_HEALTH = this.MAX_HEALTH;
+                this.scoreText.setText(`Score: ${this.score}`);
                 this.healthText.setText(`HP: ${this.CUR_HEALTH}`);
             });
 
@@ -193,6 +200,11 @@
                 fontSize: '12px',
                 fontFamily: 'Arial',
                 fill: '#000000',
+            });
+            this.scoreText = this.add.text(40, 3, `Score: ${this.score}`,{
+                fontSize: '12px',
+                fontFamily: 'Arial',
+                fill: '#000080',
             });
             this.endText = this.add.text(1950, 120, "Level End!", {
                 fontSize: '12px',

@@ -15,6 +15,9 @@ class Platformer2 extends Phaser.Scene {
             this.MAX_HEALTH = 3;
             this.CUR_HEALTH = this.MAX_HEALTH;
             this.GAME_OVER = false;
+            this.score = 0;
+            this.coinScore = 100;
+            this.donutScore = 250;
             
         }
         preload() {
@@ -126,11 +129,15 @@ class Platformer2 extends Phaser.Scene {
             this.physics.add.overlap(my.sprite.player, this.coinGroup, (obj1, obj2) => {
                 obj2.destroy(); // remove coin on overlap
                 this.coinSound.play();
+                this.score += this.coinScore;
+                this.scoreText.setText(`Score: ${this.score}`);
             });
             this.physics.add.overlap(my.sprite.player, this.donutGroup, (obj1, obj2) => {
                 obj2.destroy(); // remove donut on overlap
                 this.donutSound.play();
                 this.CUR_HEALTH = this.MAX_HEALTH;
+                this.score += this.donutScore;
+                this.scoreText.setText(`Score: ${this.score}`);
                 this.healthText.setText(`HP: ${this.CUR_HEALTH}`);
             });
 
@@ -181,6 +188,11 @@ class Platformer2 extends Phaser.Scene {
                 fontSize: '12px',
                 fontFamily: 'Arial',
                 fill: '#000000',
+            });
+            this.scoreText = this.add.text(40, 3, `Score: ${this.score}`,{
+                fontSize: '12px',
+                fontFamily: 'Arial',
+                fill: '#000080',
             });
             this.jumpText = this.add.text(5, 32, "Press Up Arrow 2x to Double Jump!",{
                 fontSize: '12px',
