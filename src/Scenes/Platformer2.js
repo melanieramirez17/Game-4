@@ -168,6 +168,17 @@ class Platformer2 extends Phaser.Scene {
             });
             my.vfx.walking.stop();
 
+            my.vfx.jump = this.add.particles(0, 0, "kenny-particles", {
+                frame: ['muzzle_02.png', 'muzzle_04.png'],
+                // TODO: Try: add random: true
+                scale: {start: 0.03, end: 0},
+                //  maxAliveParticles: 10,
+                lifespan: 200,
+                //gravityY: -400,
+                alpha: {start: 1, end: 0.1}, 
+            });
+            my.vfx.jump.stop();
+
             this.jumpsRemaining  = this.MAX_JUMPS;
             this.jumpBufferTimer = -Infinity;   // timestamp of last jump keypress; -Infinity = no pending buffer
             this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
@@ -283,9 +294,13 @@ class Platformer2 extends Phaser.Scene {
                 my.sprite.player.setVelocityY(this.JUMP_VELOCITY);
                 this.jumpsRemaining--;
                 this.jumpBufferTimer = -Infinity;   // consume the press so it only fires once
+                my.vfx.jump.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-10, my.sprite.player.displayHeight/2-5, false);
+                my.vfx.jump.setParticleSpeed(this.PARTICLE_VELOCITY, 0);
+                my.vfx.jump.start();
                 this.jumpSound.play();
-
-                
+            }
+            if (my.sprite.player.body.blocked.down) {
+                my.vfx.jump.stop();
             }
             // player jump
             // note that we need body.blocked rather than body.touching b/c the former applies to tilemap tiles and the latter to the "ground"
@@ -294,13 +309,7 @@ class Platformer2 extends Phaser.Scene {
                 my.sprite.player.anims.play('jump');
                 
             }
-            if(my.sprite.player.body.blocked.down && Phaser.Input.Keyboard.JustDown(cursors.up)) {
-                // TODO: set a Y velocity to have the player "jump" upwards (negative Y direction)
-                my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
-                this.jumpSound.play();
-
-
-            }
+            
             if(Phaser.Input.Keyboard.JustDown(this.rKey)) {
                 this.scene.restart();
             }
