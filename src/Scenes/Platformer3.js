@@ -1,6 +1,6 @@
-class Platformer2 extends Phaser.Scene {
+class Platformer3 extends Phaser.Scene {
         constructor() {
-            super("platformer2Scene");
+            super("platformer3Scene");
         }
         init() {
             // variables and settings
@@ -24,7 +24,7 @@ class Platformer2 extends Phaser.Scene {
             this.load.scenePlugin('AnimatedTiles', './lib/AnimatedTiles.js', 'animatedTiles', 'animatedTiles');
         }
         create(){
-            this.map = this.add.tilemap("platformer-game-level-2", 18, 18, 45, 25);
+            this.map = this.add.tilemap("platformer-game-level-3", 18, 18, 45, 25);
             this.animatedTiles.init(this.map);
 
             this.tileset = this.map.addTilesetImage("kenny_tilemap_packed_food", "tilemap_tiles_food");
@@ -32,9 +32,10 @@ class Platformer2 extends Phaser.Scene {
 
             this.background = this.map.createLayer("Background", this.tileset2, 0, 0);
             this.groundLayer = this.map.createLayer("Ground-n-Platforms", this.tileset, 0, 0);
-            //this.waterLayer = this.map.createLayer("Water", this.tileset2, 0, 0);
-            this.spikesLayer = this.map.createLayer("Spikes", this.tileset2, 0, 0);
+            this.spikeLayer = this.map.createLayer("Spikes", this.tileset2, 0, 0);
+            //this.spikesLayer = this.map.createLayer("Spikes", this.tileset2, 0, 0);
             this.platformLayer = this.map.createLayer("Platforms", this.tileset, 0, 0);
+            this.switchLayer = this.map.createLayer("Switch", this.tileset2, 0, 0);
 
             this.jumpSound = this.sound.add('sfx_jump', { loop: false, volume: 0.9 });
             this.coinSound = this.sound.add('coin_collect', { loop: false, volume: 0.7 });
@@ -45,7 +46,7 @@ class Platformer2 extends Phaser.Scene {
             this.groundLayer.setCollisionByProperty({
                 collides: true
             });
-            this.spikesLayer.setCollisionByProperty({
+            this.spikeLayer.setCollisionByProperty({
                 collides: true
             });
             this.platformLayer.setCollisionByProperty({
@@ -56,6 +57,74 @@ class Platformer2 extends Phaser.Scene {
                     tile.setCollision(false, false, true, false);
                 }
             });
+            this.switchLayer.setCollisionByProperty({
+                collides: true
+            });
+            this.leftSwitchable = this.switchLayer.filterTiles((tile) => {
+                if (tile.properties.switchable == "left") {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+            // set to invisible -- switch will control visibility
+            for (let tile of this.leftSwitchable) {
+                tile.visible = false;
+                tile.setCollision(false, false, false, false);
+            }
+
+            // right-switchable
+            this.rightSwitchable = this.switchLayer.filterTiles((tile) => {
+                if (tile.properties.switchable == "right") {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+
+            // set to invisible -- switch will control visibility
+            for (let tile of this.rightSwitchable) {
+                tile.visible = false;
+                tile.setCollision(false, false, false, false);
+            }
+
+            this.switchCollisionOngoing = false;
+            let collisionProcess = (obj1, obj2) => { // is the process handler
+                // Handle intersection with the switch
+                // Look for moving left to right (-->)
+                if (obj2.properties.switch
+                    && my.sprite.player.body.acceleration.x > 0) {
+                            obj2.index = 67; // left leaning switch tile
+                            for (let tile of this.leftSwitchable) {
+                                tile.visible = true;
+                                tile.setCollision(true, true, true, true);
+                            }
+                            for (let tile of this.rightSwitchable) {
+                                tile.visible = false;
+                                tile.setCollision(false, false, false, false);
+                            }
+                            return false;
+                    }
+
+                // Handle intersection with the switch
+                // Look for moving right to left (<--)
+                if (obj2.properties.switch 
+                    && my.sprite.player.body.acceleration.x < 0) {
+                            obj2.index = 65; // right leaning switch tile
+                            for (let tile of this.leftSwitchable) {
+                                tile.visible = false;
+                                tile.setCollision(false, false, false, false);
+                            }
+                            for (let tile of this.rightSwitchable) {
+                                tile.visible = true;
+                                tile.setCollision(true, true, true, true);
+                            }
+                            return false;
+                    }
+
+                return true;
+
+            }
 
             this.coins = this.map.createFromObjects("Objects", {
                 name: "coin",
@@ -82,6 +151,15 @@ class Platformer2 extends Phaser.Scene {
                 repeat: -1      // Loop the animation indefinitely
             });
             this.anims.play('coinAnim', this.coins);
+            this.anims.create({
+                key: 'donutAnim', // Animation key
+                frames: this.anims.generateFrameNumbers('tilemap_sheet2', 
+                    {start: 14, end: 15}
+                ),
+                frameRate: 2,  // Higher is faster
+                repeat: -1      // Loop the animation indefinitely
+            });
+            this.anims.play('donutAnim', this.donut);
 
             this.end = this.map.createFromObjects("Objects", {
                 name: "end",
@@ -110,19 +188,20 @@ class Platformer2 extends Phaser.Scene {
 
             my.sprite.player = this.physics.add.sprite(this.spawnX, this.spawnY, "platformer_characters", "tile_0000.png")
             my.sprite.player.setCollideWorldBounds(true);
+            this.physics.add.collider(my.sprite.player, this.switchLayer, null,  collisionProcess, this);
             this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 
             this.physics.add.collider(my.sprite.player, this.groundLayer);
             this.physics.add.collider(my.sprite.player, this.platformLayer);
 
-            this.physics.add.collider(my.sprite.player, this.spikesLayer, () => {
+            this.physics.add.collider(my.sprite.player, this.spikeLayer, () => {
                 this.headhitSound.play();
                 this.handlePlayerDeath();
             }, null, this);
             
             if(this.end && this.end.length > 0){
                 this.physics.add.overlap(my.sprite.player, this.end[0], () => {
-                    this.scene.start("platformer3Scene");
+                    this.triggerEndState("YOU WIN!", "#00ff66");
                 });
             }
 
@@ -205,7 +284,7 @@ class Platformer2 extends Phaser.Scene {
                 fontFamily: 'Arial',
                 fill: '#000080',
             });
-            this.jumpText = this.add.text(5, 32, "Press Up Arrow 2x to Double Jump!",{
+            this.switchText = this.add.text(5, 32, "Switch controls tiles!",{
                 fontSize: '12px',
                 fontFamily: 'Arial',
                 fill: '#000000',
