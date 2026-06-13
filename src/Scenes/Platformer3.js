@@ -201,7 +201,7 @@ class Platformer3 extends Phaser.Scene {
             
             if(this.end && this.end.length > 0){
                 this.physics.add.overlap(my.sprite.player, this.end[0], () => {
-                    this.triggerEndState("YOU WIN!", "#00ff66");
+                    this.scene.start("creditsScene");
                 });
             }
 
@@ -274,7 +274,7 @@ class Platformer3 extends Phaser.Scene {
             });
             this.healthText.setDepth(1000);
             this.healthText.setOrigin(0.5);
-            this.levelText = this.add.text(5, 17, "Level 2", {
+            this.levelText = this.add.text(5, 17, "Level 3", {
                 fontSize: '12px',
                 fontFamily: 'Arial',
                 fill: '#000000',
